@@ -1,108 +1,80 @@
 wait("0.2")
 
--- LocalScript in StarterPlayer > StarterPlayerScripts
+--// GUI Setup
+local ScreenGui = Instance.new("ScreenGui")
+ScreenGui.Parent = game.Players.LocalPlayer:WaitForChild("PlayerGui")
+ScreenGui.ResetOnSpawn = false
 
-local UIS = game:GetService("UserInputService")
-local RunService = game:GetService("RunService")
-local Players = game:GetService("Players")
+local Frame = Instance.new("Frame")
+Frame.Size = UDim2.new(0, 200, 0, 200)
+Frame.Position = UDim2.new(0.5, -100, 0.5, -100)
+Frame.BackgroundColor3 = Color3.fromRGB(255, 165, 0)
+Frame.Active = true
+Frame.Draggable = true
+Frame.Parent = ScreenGui
 
-local player = Players.LocalPlayer
-
--- Character references (updated on respawn)
-local character
-local humanoidRootPart
-local humanoid
-
-local flying = false
-local flySpeed = 50
-local noclip = false
-local espEnabled = false
-local invisibleEnabled = false
-
-local espTable = {}
-
--- Setup character references
-local function setupCharacter(char)
-    character = char
-    humanoidRootPart = character:WaitForChild("HumanoidRootPart")
-    humanoid = character:WaitForChild("Humanoid")
-    if invisibleEnabled then
-        for _, part in pairs(character:GetChildren()) do
-            if part:IsA("BasePart") then
-                part.Transparency = 1
-            end
-        end
-    end
-end
-setupCharacter(player.Character or player.CharacterAdded:Wait())
-player.CharacterAdded:Connect(setupCharacter)
-
--- GUI Creation
-local screenGui = Instance.new("ScreenGui")
-screenGui.Parent = player:WaitForChild("PlayerGui")
-screenGui.ResetOnSpawn = false
-
-local mainFrame = Instance.new("Frame")
-mainFrame.Size = UDim2.new(0,250,0,300)
-mainFrame.Position = UDim2.new(0.5,-125,0.5,-150)
-mainFrame.BackgroundColor3 = Color3.fromRGB(255,140,0)
-mainFrame.BorderSizePixel = 2
-mainFrame.Parent = screenGui
-mainFrame.Active = true
-mainFrame.Draggable = true
-
--- Title
-local titleLabel = Instance.new("TextLabel")
-titleLabel.Size = UDim2.new(1,0,0.15,0)
-titleLabel.Position = UDim2.new(0,0,0,5)
-titleLabel.BackgroundTransparency = 1
-titleLabel.Text = "Pumpkinraves Admin"
-titleLabel.TextColor3 = Color3.fromRGB(255,255,255)
-titleLabel.Font = Enum.Font.GothamSemibold
-titleLabel.TextScaled = true
-titleLabel.Parent = mainFrame
-
--- Button creator
-local function createButton(text,pos)
-    local btn = Instance.new("TextButton")
-    btn.Size = UDim2.new(0.8,0,0.15,0)
-    btn.Position = pos
-    btn.BackgroundColor3 = Color3.fromRGB(255,170,0)
-    btn.Text = text
-    btn.TextScaled = true
-    btn.Font = Enum.Font.GothamBold
-    btn.TextColor3 = Color3.fromRGB(255,255,255)
-    btn.Parent = mainFrame
-    return btn
-end
+local Title = Instance.new("TextLabel")
+Title.Size = UDim2.new(1, 0, 0, 30)
+Title.BackgroundTransparency = 1
+Title.Text = "Pumpkinraves Admin"
+Title.TextColor3 = Color3.fromRGB(255, 255, 255)
+Title.Font = Enum.Font.SourceSansBold
+Title.TextSize = 18
+Title.Parent = Frame
 
 -- Buttons
-local flyButton = createButton("Fly: OFF", UDim2.new(0.1,0,0.25,0))
-local noclipButton = createButton("Noclip: OFF", UDim2.new(0.1,0,0.45,0))
-local speedButton = createButton("Speed +2", flyButton.Position)
-speedButton.Visible = false
-local jumpButton = createButton("Jump +2", noclipButton.Position)
-jumpButton.Visible = false
-local espButton = createButton("ESP: OFF", flyButton.Position)
-espButton.Visible = false
-local invisibleButton = createButton("Invisible: OFF", noclipButton.Position)
-invisibleButton.Visible = false
-local nextPageButton = createButton("Next", UDim2.new(0.1,0,0.65,0))
-local prevPageButton = createButton("Next", nextPageButton.Position)
-prevPageButton.Visible = true
+local flyButton = Instance.new("TextButton")
+flyButton.Size = UDim2.new(1, 0, 0, 30)
+flyButton.Position = UDim2.new(0, 0, 0, 30)
+flyButton.Text = "Fly"
+flyButton.Parent = Frame
 
--- Page tracking
+local noclipButton = Instance.new("TextButton")
+noclipButton.Size = UDim2.new(1, 0, 0, 30)
+noclipButton.Position = UDim2.new(0, 0, 0, 60)
+noclipButton.Text = "Noclip"
+noclipButton.Parent = Frame
+
+local speedButton = Instance.new("TextButton")
+speedButton.Size = UDim2.new(1, 0, 0, 30)
+speedButton.Position = UDim2.new(0, 0, 0, 30)
+speedButton.Text = "Speed +2"
+speedButton.Parent = Frame
+
+local jumpButton = Instance.new("TextButton")
+jumpButton.Size = UDim2.new(1, 0, 0, 30)
+jumpButton.Position = UDim2.new(0, 0, 0, 60)
+jumpButton.Text = "Jump +2"
+jumpButton.Parent = Frame
+
+local espButton = Instance.new("TextButton")
+espButton.Size = UDim2.new(1, 0, 0, 30)
+espButton.Position = UDim2.new(0, 0, 0, 30)
+espButton.Text = "ESP"
+espButton.Parent = Frame
+
+local hpButton = Instance.new("TextButton")
+hpButton.Size = UDim2.new(1, 0, 0, 30)
+hpButton.Position = UDim2.new(0, 0, 0, 60)
+hpButton.Text = "10K HP"
+hpButton.Parent = Frame
+
+local nextButton = Instance.new("TextButton")
+nextButton.Size = UDim2.new(1, 0, 0, 30)
+nextButton.Position = UDim2.new(0, 0, 0, 150)
+nextButton.Text = "Next"
+nextButton.Parent = Frame
+
+-- Page system
 local currentPage = 1
 local function updatePage()
-    -- Hide all buttons
     flyButton.Visible = false
     noclipButton.Visible = false
     speedButton.Visible = false
     jumpButton.Visible = false
     espButton.Visible = false
-    invisibleButton.Visible = false
+    hpButton.Visible = false
 
-    -- Show based on page
     if currentPage == 1 then
         flyButton.Visible = true
         noclipButton.Visible = true
@@ -111,138 +83,88 @@ local function updatePage()
         jumpButton.Visible = true
     elseif currentPage == 3 then
         espButton.Visible = true
-        invisibleButton.Visible = true
+        hpButton.Visible = true
     end
 end
+
+nextButton.MouseButton1Click:Connect(function()
+    currentPage += 1
+    if currentPage > 3 then
+        currentPage = 1
+    end
+    updatePage()
+end)
+
 updatePage()
 
--- Fly functions
-local function startFlying()
-    if flying then return end
-    flying = true
-    flyButton.Text = "Fly: ON"
-    local gyro = Instance.new("BodyGyro")
-    gyro.P = 9e4
-    gyro.MaxTorque = Vector3.new(9e9,9e9,9e9)
-    gyro.CFrame = humanoidRootPart.CFrame
-    gyro.Parent = humanoidRootPart
-    local velocity = Instance.new("BodyVelocity")
-    velocity.Velocity = Vector3.zero
-    velocity.MaxForce = Vector3.new(9e9,9e9,9e9)
-    velocity.Parent = humanoidRootPart
-    RunService.RenderStepped:Connect(function()
-        if not flying then return end
-        local cam = workspace.CurrentCamera
-        gyro.CFrame = cam.CFrame
-        local dir = Vector3.zero
-        if UIS:IsKeyDown(Enum.KeyCode.W) then dir += cam.CFrame.LookVector end
-        if UIS:IsKeyDown(Enum.KeyCode.S) then dir -= cam.CFrame.LookVector end
-        if UIS:IsKeyDown(Enum.KeyCode.A) then dir -= cam.CFrame.RightVector end
-        if UIS:IsKeyDown(Enum.KeyCode.D) then dir += cam.CFrame.RightVector end
-        if UIS:IsKeyDown(Enum.KeyCode.Space) then dir += cam.CFrame.UpVector end
-        if UIS:IsKeyDown(Enum.KeyCode.LeftShift) then dir -= cam.CFrame.UpVector end
-        if dir.Magnitude > 0 then dir = dir.Unit end
-        velocity.Velocity = dir * flySpeed
-    end)
-end
-local function stopFlying()
-    flying = false
-    flyButton.Text = "Fly: OFF"
-    if humanoidRootPart:FindFirstChild("BodyGyro") then humanoidRootPart.BodyGyro:Destroy() end
-    if humanoidRootPart:FindFirstChild("BodyVelocity") then humanoidRootPart.BodyVelocity:Destroy() end
-end
+-- Fly Function
+local flying = false
+local uis = game:GetService("UserInputService")
+local rs = game:GetService("RunService")
+local player = game.Players.LocalPlayer
+local char = player.Character or player.CharacterAdded:Wait()
+local hrp = char:WaitForChild("HumanoidRootPart")
 
--- Noclip
-local function startNoclip()
-    if noclip then return end
-    noclip = true
-    noclipButton.Text = "Noclip: ON"
-    RunService.Stepped:Connect(function()
-        if noclip then
-            for _, part in pairs(character:GetChildren()) do
-                if part:IsA("BasePart") then part.CanCollide = false end
-            end
+flyButton.MouseButton1Click:Connect(function()
+    flying = not flying
+    local bv = Instance.new("BodyVelocity")
+    bv.MaxForce = Vector3.new(9e9, 9e9, 9e9)
+    bv.Velocity = Vector3.zero
+    bv.Parent = hrp
+
+    rs.RenderStepped:Connect(function()
+        if flying then
+            local move = Vector3.zero
+            if uis:IsKeyDown(Enum.KeyCode.W) then move = move + (hrp.CFrame.LookVector) end
+            if uis:IsKeyDown(Enum.KeyCode.S) then move = move - (hrp.CFrame.LookVector) end
+            if uis:IsKeyDown(Enum.KeyCode.A) then move = move - (hrp.CFrame.RightVector) end
+            if uis:IsKeyDown(Enum.KeyCode.D) then move = move + (hrp.CFrame.RightVector) end
+            bv.Velocity = move * 50
+        else
+            bv:Destroy()
         end
     end)
-end
-local function stopNoclip()
-    noclip = false
-    noclipButton.Text = "Noclip: OFF"
-    for _, part in pairs(character:GetChildren()) do
-        if part:IsA("BasePart") then part.CanCollide = true end
-    end
-end
+end)
 
--- ESP
-local function toggleESP()
-    espEnabled = not espEnabled
-    espButton.Text = espEnabled and "ESP: ON" or "ESP: OFF"
-    for _, obj in pairs(espTable) do
-        if obj.Adornee then obj:Destroy() end
-    end
-    espTable = {}
-    if espEnabled then
-        for _, p in pairs(Players:GetPlayers()) do
-            if p ~= player and p.Character then
-                local part = p.Character:FindFirstChild("HumanoidRootPart")
-                if part then
-                    local box = Instance.new("BoxHandleAdornment")
-                    box.Adornee = part
-                    box.Size = part.Size
-                    box.Color3 = Color3.fromRGB(255,165,0)
-                    box.AlwaysOnTop = true
-                    box.ZIndex = 2
-                    box.Parent = part
-                    espTable[#espTable+1] = box
-                    local billboard = Instance.new("BillboardGui")
-                    billboard.Size = UDim2.new(0,100,0,50)
-                    billboard.Adornee = part
-                    billboard.AlwaysOnTop = true
-                    local textLabel = Instance.new("TextLabel")
-                    textLabel.BackgroundTransparency = 1
-                    textLabel.Size = UDim2.new(1,0,1,0)
-                    textLabel.TextColor3 = Color3.fromRGB(255,165,0)
-                    textLabel.Text = p.Name
-                    textLabel.TextScaled = true
-                    textLabel.Font = Enum.Font.GothamBold
-                    textLabel.Parent = billboard
-                    billboard.Parent = part
-                    espTable[#espTable+1] = billboard
+-- Noclip
+local noclip = false
+noclipButton.MouseButton1Click:Connect(function()
+    noclip = not noclip
+    rs.Stepped:Connect(function()
+        if noclip then
+            for _, part in pairs(char:GetDescendants()) do
+                if part:IsA("BasePart") then
+                    part.CanCollide = false
                 end
             end
         end
-    end
-end
+    end)
+end)
 
--- Invisible
-local function toggleInvisible()
-    invisibleEnabled = not invisibleEnabled
-    invisibleButton.Text = invisibleEnabled and "Invisible: ON" or "Invisible: OFF"
-    for _, part in pairs(character:GetChildren()) do
-        if part:IsA("BasePart") then
-            part.Transparency = invisibleEnabled and 1 or 0
+-- Speed +2
+speedButton.MouseButton1Click:Connect(function()
+    char.Humanoid.WalkSpeed = char.Humanoid.WalkSpeed + 2
+end)
+
+-- Jump +2
+jumpButton.MouseButton1Click:Connect(function()
+    char.Humanoid.JumpPower = char.Humanoid.JumpPower + 2
+end)
+
+-- ESP
+espButton.MouseButton1Click:Connect(function()
+    for _, plr in pairs(game.Players:GetPlayers()) do
+        if plr ~= player and plr.Character then
+            local highlight = Instance.new("Highlight")
+            highlight.FillColor = Color3.fromRGB(255, 165, 0)
+            highlight.OutlineColor = Color3.new(1, 1, 1)
+            highlight.Parent = plr.Character
         end
     end
-end
-
--- Connections
-flyButton.MouseButton1Click:Connect(function() if flying then stopFlying() else startFlying() end end)
-noclipButton.MouseButton1Click:Connect(function() if noclip then stopNoclip() else startNoclip() end end)
-speedButton.MouseButton1Click:Connect(function() humanoid.WalkSpeed += 2 end)
-jumpButton.MouseButton1Click:Connect(function() humanoid.JumpPower += 2 end)
-espButton.MouseButton1Click:Connect(toggleESP)
-invisibleButton.MouseButton1Click:Connect(toggleInvisible)
-
--- Page navigation cyclical
-nextPageButton.MouseButton1Click:Connect(function()
-    currentPage += 1
-    if currentPage > 3 then currentPage = 1 end
-    updatePage()
-end)
-prevPageButton.MouseButton1Click:Connect(function()
-    currentPage -= 1
-    if currentPage < 1 then currentPage = 3 end
-    updatePage()
 end)
 
-
+-- 10K HP
+hpButton.MouseButton1Click:Connect(function()
+    char.Humanoid.MaxHealth = 10000
+    char.Humanoid.Health = 10000
+end)
