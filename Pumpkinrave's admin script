@@ -1,170 +1,123 @@
 wait("0.2")
 
---// GUI Setup
-local ScreenGui = Instance.new("ScreenGui")
-ScreenGui.Parent = game.Players.LocalPlayer:WaitForChild("PlayerGui")
-ScreenGui.ResetOnSpawn = false
+-- Services
+local Players = game:GetService("Players")
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
+local RunService = game:GetService("RunService")
+local player = Players.LocalPlayer
 
-local Frame = Instance.new("Frame")
-Frame.Size = UDim2.new(0, 200, 0, 200)
-Frame.Position = UDim2.new(0.5, -100, 0.5, -100)
-Frame.BackgroundColor3 = Color3.fromRGB(255, 165, 0)
-Frame.Active = true
-Frame.Draggable = true
-Frame.Parent = ScreenGui
-
-local Title = Instance.new("TextLabel")
-Title.Size = UDim2.new(1, 0, 0, 30)
-Title.BackgroundTransparency = 1
-Title.Text = "Pumpkinraves Admin"
-Title.TextColor3 = Color3.fromRGB(255, 255, 255)
-Title.Font = Enum.Font.SourceSansBold
-Title.TextSize = 18
-Title.Parent = Frame
-
--- Buttons
-local flyButton = Instance.new("TextButton")
-flyButton.Size = UDim2.new(1, 0, 0, 30)
-flyButton.Position = UDim2.new(0, 0, 0, 30)
-flyButton.Text = "Fly"
-flyButton.Parent = Frame
-
-local noclipButton = Instance.new("TextButton")
-noclipButton.Size = UDim2.new(1, 0, 0, 30)
-noclipButton.Position = UDim2.new(0, 0, 0, 60)
-noclipButton.Text = "Noclip"
-noclipButton.Parent = Frame
-
-local speedButton = Instance.new("TextButton")
-speedButton.Size = UDim2.new(1, 0, 0, 30)
-speedButton.Position = UDim2.new(0, 0, 0, 30)
-speedButton.Text = "Speed +2"
-speedButton.Parent = Frame
-
-local jumpButton = Instance.new("TextButton")
-jumpButton.Size = UDim2.new(1, 0, 0, 30)
-jumpButton.Position = UDim2.new(0, 0, 0, 60)
-jumpButton.Text = "Jump +2"
-jumpButton.Parent = Frame
-
-local espButton = Instance.new("TextButton")
-espButton.Size = UDim2.new(1, 0, 0, 30)
-espButton.Position = UDim2.new(0, 0, 0, 30)
-espButton.Text = "ESP"
-espButton.Parent = Frame
-
-local hpButton = Instance.new("TextButton")
-hpButton.Size = UDim2.new(1, 0, 0, 30)
-hpButton.Position = UDim2.new(0, 0, 0, 60)
-hpButton.Text = "10K HP"
-hpButton.Parent = Frame
-
-local nextButton = Instance.new("TextButton")
-nextButton.Size = UDim2.new(1, 0, 0, 30)
-nextButton.Position = UDim2.new(0, 0, 0, 150)
-nextButton.Text = "Next"
-nextButton.Parent = Frame
-
--- Page system
-local currentPage = 1
-local function updatePage()
-    flyButton.Visible = false
-    noclipButton.Visible = false
-    speedButton.Visible = false
-    jumpButton.Visible = false
-    espButton.Visible = false
-    hpButton.Visible = false
-
-    if currentPage == 1 then
-        flyButton.Visible = true
-        noclipButton.Visible = true
-    elseif currentPage == 2 then
-        speedButton.Visible = true
-        jumpButton.Visible = true
-    elseif currentPage == 3 then
-        espButton.Visible = true
-        hpButton.Visible = true
-    end
+-- RemoteEvent creation
+local teleportEvent = ReplicatedStorage:FindFirstChild("TeleportEvent")
+if not teleportEvent then
+    teleportEvent = Instance.new("RemoteEvent")
+    teleportEvent.Name = "TeleportEvent"
+    teleportEvent.Parent = ReplicatedStorage
 end
 
-nextButton.MouseButton1Click:Connect(function()
-    currentPage += 1
-    if currentPage > 3 then
-        currentPage = 1
-    end
-    updatePage()
-end)
+-- Server-side teleport handling
+if RunService:IsServer() then
+    teleportEvent.OnServerEvent:Connect(function(p)
+        local char = p.Character
+        if not char or not char:FindFirstChild("HumanoidRootPart") then return end
 
-updatePage()
-
--- Fly Function
-local flying = false
-local uis = game:GetService("UserInputService")
-local rs = game:GetService("RunService")
-local player = game.Players.LocalPlayer
-local char = player.Character or player.CharacterAdded:Wait()
-local hrp = char:WaitForChild("HumanoidRootPart")
-
-flyButton.MouseButton1Click:Connect(function()
-    flying = not flying
-    local bv = Instance.new("BodyVelocity")
-    bv.MaxForce = Vector3.new(9e9, 9e9, 9e9)
-    bv.Velocity = Vector3.zero
-    bv.Parent = hrp
-
-    rs.RenderStepped:Connect(function()
-        if flying then
-            local move = Vector3.zero
-            if uis:IsKeyDown(Enum.KeyCode.W) then move = move + (hrp.CFrame.LookVector) end
-            if uis:IsKeyDown(Enum.KeyCode.S) then move = move - (hrp.CFrame.LookVector) end
-            if uis:IsKeyDown(Enum.KeyCode.A) then move = move - (hrp.CFrame.RightVector) end
-            if uis:IsKeyDown(Enum.KeyCode.D) then move = move + (hrp.CFrame.RightVector) end
-            bv.Velocity = move * 50
-        else
-            bv:Destroy()
-        end
-    end)
-end)
-
--- Noclip
-local noclip = false
-noclipButton.MouseButton1Click:Connect(function()
-    noclip = not noclip
-    rs.Stepped:Connect(function()
-        if noclip then
-            for _, part in pairs(char:GetDescendants()) do
-                if part:IsA("BasePart") then
-                    part.CanCollide = false
-                end
+        local originalCFrame = char.HumanoidRootPart.CFrame
+        for _, target in ipairs(Players:GetPlayers()) do
+            if target ~= p and target.Character and target.Character:FindFirstChild("HumanoidRootPart") then
+                char:SetPrimaryPartCFrame(target.Character.HumanoidRootPart.CFrame + Vector3.new(0, 3, 0))
+                task.wait(2)
+                char:SetPrimaryPartCFrame(originalCFrame)
             end
         end
     end)
+    return
+end
+
+-- GUI Creation
+local screenGui = Instance.new("ScreenGui")
+screenGui.Name = "TeleportGUI"
+screenGui.ResetOnSpawn = false
+screenGui.Parent = player:WaitForChild("PlayerGui")
+
+-- Main Frame
+local mainFrame = Instance.new("Frame")
+mainFrame.Name = "MainFrame"
+mainFrame.Size = UDim2.new(0, 220, 0, 130)
+mainFrame.Position = UDim2.new(1, -230, 0, 10)
+mainFrame.BackgroundColor3 = Color3.fromRGB(35, 35, 35)
+mainFrame.BackgroundTransparency = 0.1
+mainFrame.BorderSizePixel = 0
+mainFrame.Parent = screenGui
+
+-- Rounded corners
+local corner = Instance.new("UICorner")
+corner.CornerRadius = UDim.new(0, 12)
+corner.Parent = mainFrame
+
+-- Teleport Button
+local teleportButton = Instance.new("TextButton")
+teleportButton.Size = UDim2.new(1, -20, 0, 40)
+teleportButton.Position = UDim2.new(0, 10, 0, 10)
+teleportButton.Text = "Teleport to Everyone"
+teleportButton.TextColor3 = Color3.new(1, 1, 1)
+teleportButton.BackgroundColor3 = Color3.fromRGB(0, 170, 255)
+teleportButton.BorderSizePixel = 0
+teleportButton.Parent = mainFrame
+local teleportCorner = Instance.new("UICorner")
+teleportCorner.CornerRadius = UDim.new(0, 8)
+teleportCorner.Parent = teleportButton
+
+-- Mobile Keypad Button
+local keypadButton = Instance.new("TextButton")
+keypadButton.Size = UDim2.new(1, -20, 0, 40)
+keypadButton.Position = UDim2.new(0, 10, 0, 60)
+keypadButton.Text = "Mobile Keypad"
+keypadButton.TextColor3 = Color3.new(1, 1, 1)
+keypadButton.BackgroundColor3 = Color3.fromRGB(255, 140, 0)
+keypadButton.BorderSizePixel = 0
+keypadButton.Parent = mainFrame
+local keypadCorner = Instance.new("UICorner")
+keypadCorner.CornerRadius = UDim.new(0, 8)
+keypadCorner.Parent = keypadButton
+
+-- Close Button
+local closeButton = Instance.new("TextButton")
+closeButton.Size = UDim2.new(0, 20, 0, 20)
+closeButton.Position = UDim2.new(1, -25, 0, 5)
+closeButton.Text = "X"
+closeButton.TextColor3 = Color3.new(1, 1, 1)
+closeButton.BackgroundColor3 = Color3.fromRGB(255, 80, 80)
+closeButton.BorderSizePixel = 0
+closeButton.Parent = mainFrame
+local closeCorner = Instance.new("UICorner")
+closeCorner.CornerRadius = UDim.new(0, 4)
+closeCorner.Parent = closeButton
+
+-- Pumpkin Toggle Button
+local pumpkinButton = Instance.new("ImageButton")
+pumpkinButton.Size = UDim2.new(0, 50, 0, 50)
+pumpkinButton.Position = UDim2.new(0.5, -25, 0, 10)
+pumpkinButton.Image = "rbxassetid://6537731035" -- Pumpkin image
+pumpkinButton.Visible = false
+pumpkinButton.BackgroundTransparency = 1
+pumpkinButton.Parent = screenGui
+pumpkinButton.Draggable = true
+
+-- Functionality
+teleportButton.MouseButton1Click:Connect(function()
+    teleportEvent:FireServer()
 end)
 
--- Speed +2
-speedButton.MouseButton1Click:Connect(function()
-    char.Humanoid.WalkSpeed = char.Humanoid.WalkSpeed + 2
+keypadButton.MouseButton1Click:Connect(function()
+    -- 🔹 Replace this code with the script you want to run in YOUR game
+    print("Mobile keypad button pressed — run your own safe code here!")
 end)
 
--- Jump +2
-jumpButton.MouseButton1Click:Connect(function()
-    char.Humanoid.JumpPower = char.Humanoid.JumpPower + 2
+closeButton.MouseButton1Click:Connect(function()
+    mainFrame.Visible = false
+    pumpkinButton.Visible = true
 end)
 
--- ESP
-espButton.MouseButton1Click:Connect(function()
-    for _, plr in pairs(game.Players:GetPlayers()) do
-        if plr ~= player and plr.Character then
-            local highlight = Instance.new("Highlight")
-            highlight.FillColor = Color3.fromRGB(255, 165, 0)
-            highlight.OutlineColor = Color3.new(1, 1, 1)
-            highlight.Parent = plr.Character
-        end
-    end
-end)
-
--- 10K HP
-hpButton.MouseButton1Click:Connect(function()
-    char.Humanoid.MaxHealth = 10000
-    char.Humanoid.Health = 10000
+pumpkinButton.MouseButton1Click:Connect(function()
+    mainFrame.Visible = true
+    pumpkinButton.Visible = false
 end)
